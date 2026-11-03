@@ -1,13 +1,203 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proyecto</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Age of Empires II - Mini Imperio</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+    body {
+      margin: 0;
+      padding: 16px;
+      background-color: #1a1612;
+      color: #f0e6d2;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+    }
+    h1 {
+      color: #dfb05b;
+      margin-top: 10px;
+      font-size: 1.6rem;
+      text-shadow: 2px 2px 4px #000;
+    }
+    .age-badge {
+      display: inline-block;
+      background: #3a2e23;
+      border: 1px solid #c8a85f;
+      padding: 6px 14px;
+      border-radius: 4px;
+      color: #ffd700;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+    .resources-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .res-card {
+      background: #282119;
+      border: 1px solid #544432;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .res-card h3 {
+      margin: 0 0 6px 0;
+      font-size: 0.9rem;
+      color: #baa482;
+    }
+    .res-card .count {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #ffffff;
+    }
+    .actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    button {
+      background: linear-gradient(180deg, #6e1c1c 0%, #451010 100%);
+      border: 1px solid #d4af37;
+      color: #fff;
+      padding: 12px 8px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+    }
+    button:active {
+      transform: translateY(2px);
+    }
+    button.upgrade-btn {
+      background: linear-gradient(180deg, #1c526e 0%, #103345 100%);
+      width: 100%;
+      padding: 14px;
+      font-size: 1rem;
+    }
+    .villagers-section {
+      background: #221b14;
+      border: 1px solid #443628;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>⚔️ Age of Empires II</h1>
+  <div class="age-badge" id="ageBadge">Edad de la Alta Edad Media</div>
+
+  <div class="resources-grid">
+    <div class="res-card">
+      <h3>🌾 Comida</h3>
+      <div class="count" id="foodCount">0</div>
+    </div>
+    <div class="res-card">
+      <h3>🪵 Madera</h3>
+      <div class="count" id="woodCount">0</div>
+    </div>
+    <div class="res-card">
+      <h3>🪙 Oro</h3>
+      <div class="count" id="goldCount">0</div>
+    </div>
+    <div class="res-card">
+      <h3>🪨 Piedra</h3>
+      <div class="count" id="stoneCount">0</div>
+    </div>
+  </div>
+
+  <div class="actions-grid">
+    <button onclick="gather('food')">Cazar Caza (+1 Comida)</button>
+    <button onclick="gather('wood')">Talar Árbol (+1 Madera)</button>
+    <button onclick="gather('gold')">Minar Oro (+1 Oro)</button>
+    <button onclick="gather('stone')">Minar Cantera (+1 Piedra)</button>
+  </div>
+
+  <div class="villagers-section">
+    <h3>👨‍🌾 Aldeanos Activos: <span id="villagerCount">0</span></h3>
+    <button onclick="createVillager()" style="width: 100%; margin-top: 6px;">Crear Aldeano (50 Comida)</button>
+  </div>
+
+  <button class="upgrade-btn" id="upgradeBtn" onclick="advanceAge()">Avanzar a Edad Feudal (500 Comida)</button>
+
+  <script>
+    let resources = { food: 0, wood: 0, gold: 0, stone: 0 };
+    let villagers = 0;
+    let age = 1;
+
+    const ageNames = [
+      "",
+      "Edad de la Alta Edad Media",
+      "Edad Feudal",
+      "Edad de los Castillos",
+      "Edad Imperial"
+    ];
+
+    const ageCosts = [0, 500, 1000, 2000];
+
+    function updateUI() {
+      document.getElementById('foodCount').innerText = Math.floor(resources.food);
+      document.getElementById('woodCount').innerText = Math.floor(resources.wood);
+      document.getElementById('goldCount').innerText = Math.floor(resources.gold);
+      document.getElementById('stoneCount').innerText = Math.floor(resources.stone);
+      document.getElementById('villagerCount').innerText = villagers;
+      document.getElementById('ageBadge').innerText = ageNames[age];
+
+      const upgradeBtn = document.getElementById('upgradeBtn');
+      if (age < 4) {
+        upgradeBtn.innerText = `Avanzar a ${ageNames[age + 1]} (${ageCosts[age]} Comida)`;
+      } else {
+        upgradeBtn.innerText = "¡Has alcanzado la Edad Imperial!";
+        upgradeBtn.disabled = true;
+      }
+    }
+
+    function gather(type) {
+      resources[type] += 1;
+      updateUI();
+    }
+
+    function createVillager() {
+      if (resources.food >= 50) {
+        resources.food -= 50;
+        villagers++;
+        updateUI();
+      } else {
+        alert("¡Necesitas 50 de Comida para crear un aldeano!");
+      }
+    }
+
+    function advanceAge() {
+      if (age < 4 && resources.food >= ageCosts[age]) {
+        resources.food -= ageCosts[age];
+        age++;
+        updateUI();
+        alert(`¡Felicidades! Has avanzado a la ${ageNames[age]}`);
+      } else if (age < 4) {
+        alert(`Necesitas ${ageCosts[age]} de Comida para avanzar.`);
+      }
+    }
+
+    // Producción automática de los aldeanos (1 recurso/sec distribuido)
+    setInterval(() => {
+      if (villagers > 0) {
+        resources.food += villagers * 0.4;
+        resources.wood += villagers * 0.3;
+        resources.gold += villagers * 0.2;
+        resources.stone += villagers * 0.1;
+        updateUI();
+      }
+    }, 1000);
+
+    updateUI();
+  </script>
+</body>
 </html>
